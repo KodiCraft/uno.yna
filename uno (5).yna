@@ -1,0 +1,534 @@
+{oneline:
+{!{init}
+{oneline:
+{save:s_player1;00000000000000000;}
+{save:s_player2;00000000000000000;}
+
+{save:s_lasttime;00000000000000000;}
+
+{save:s_gameState;ended;}
+
+{save:s_skippedTurn;false;}
+
+{save:s_currentCard;{f_randomCard};}
+
+{save:s_player1cards;WH;}
+{save:s_player2cards;WH;}
+
+{save:s_turncount;0;}
+
+{save:s_aiMood;chill;}
+
+{save:s_ainame;42;}
+
+Uno reset successfully!;}
+{endinit}}
+{set:newrep;true;}
+{!!description Do `+t uno start @player` to play uno!!}
+{!!descshort Do `+t uno start @player` to play uno!}
+{set:multilineOutput;;}
+
+{set:pronounlib_available;
+    {when:{call:pronounlib;};is;error;false;true;}
+;}
+
+{set:card_R0;<:R0:901098322939498546>;}
+{set:card_R1;<:R1:901098323077918801>;}
+{set:card_R2;<:R2:901098350152134666>;}
+{set:card_R3;<:R3:901098350328295424>;}
+{set:card_R4;<:R4:901098350533820506>;}
+{set:card_R5;<:R5:901098350353477663>;}
+{set:card_R6;<:R6:901098350076649484>;}
+{set:card_R7;<:R7:901098350605119519>;}
+{set:card_R8;<:R8:901098350693187604>;}
+{set:card_R9;<:R9:901098350772891658>;}
+{set:card_RP;<:RP:901098350332489809>;}
+{set:card_RS;<:RS:901098351456563200>;}
+{set:card_Y0;<:Y0:901098350793879593>;}
+{set:card_Y1;<:Y1:901098378996351026>;}
+{set:card_Y2;<:Y2:901098379130585088>;}
+{set:card_Y3;<:Y3:901098380904767548>;}
+{set:card_Y4;<:Y4:901098379289976873>;}
+{set:card_Y5;<:Y5:901098379650678865>;}
+{set:card_Y6;<:Y6:901098379218653195>;}
+{set:card_Y7;<:Y7:901098379453558824>;}
+{set:card_Y8;<:Y8:901098379474534431>;}
+{set:card_Y9;<:Y9:901098379956858910>;}
+{set:card_YP;<:YP:901098379625513000>;}
+{set:card_YS;<:YS:901098379839422565>;}
+{set:card_B0;<:B0:901098297702367292>;}
+{set:card_B1;<:B1:901098297622671430>;}
+{set:card_B2;<:B2:901098297857544192>;}
+{set:card_B3;<:B3:901098297492643942>;}
+{set:card_B4;<:B4:901098297786269696>;}
+{set:card_B5;<:B5:901098298000158750>;}
+{set:card_B6;<:B6:901098298394419241>;}
+{set:card_B7;<:B7:901098297924648960>;}
+{set:card_B8;<:B8:901098298306334720>;}
+{set:card_B9;<:B9:901098298264412200>;}
+{set:card_BP;<:BP:901098298256023573>;}
+{set:card_BS;<:BS:901098298813845514>;}
+{set:card_G0;<:G0:901098298004353115>;}
+{set:card_G1;<:G1:901098322276778064>;}
+{set:card_G2;<:G2:901098322931097621>;}
+{set:card_G3;<:G3:901098322255835148>;}
+{set:card_G4;<:G4:901098322348101633>;}
+{set:card_G5;<:G5:901098322373275648>;}
+{set:card_G6;<:G6:901098322784288839>;}
+{set:card_G7;<:G7:901098322658492456>;}
+{set:card_G8;<:G8:901098322960465950>;}
+{set:card_G9;<:G9:901098322763350057>;}
+{set:card_GP;<:GP:901098323056922655>;}
+{set:card_GS;<:GS:901098323170164777>;}
+{set:card_WC;<:WC:901098351288778772>;}
+{set:card_WF;<:WF:901098351532072990>;}
+{set:card_WH;<:WH:901845328779677747>;}
+{set:card_RC;🟥;}
+{set:card_YC;🟨;}
+{set:card_BC;🟦;}
+{set:card_GC;🟩;}
+
+
+
+{func:f_checkCardValidity;{oneline:
+    {when:{talen}
+        ;eq
+        ;2;
+    {when:{ta1}|{ta2};is;/(W.\|..)|((.).\|\3.)|(.(.)\|.\5)/;true;false;}
+    ;
+    <f_checkCardValidity: incorrect arg amount>
+;}
+;};}
+
+{func:f_nickof;
+{when:{ta1};eq;ai;{s_ainame};
+    {when:{nameof:{ta1};nick;};eq;None;{nameof:{ta1};name;};{nameof:{ta1};nick;};}
+;}
+;}
+
+{func:f_randomCard;{oneline:
+    {set:color;{wchoose:R;25;G;25;B;25;Y;25;W;8;};}
+    {when:{color};eq;W;
+        {set:number;{wchoose:F;2;C;6;};}
+    ;
+        {set:number;{wchoose:{num:0;9;};76;P;12;S;12;};}
+    ;}
+    {when:{s_player2};ne;ai;{color}{number};{when:{color};eq;W;{f_randomCard};{color}{number};};}
+;};}
+
+{func:f_drawCards;{oneline:
+    {when:{talen}
+        ;eq
+        ;2;
+    {set:s_player{ta1}cards;{s_player{ta1}cards}{loop:{ta2};{f_randomCard};};}
+    {save:s_player{ta1}cards;{s_player{ta1}cards};}
+    ;
+    <f_drawCards: incorrect arg amount>
+;}
+;};}
+
+{func:f_var;{oneline:
+    {{ta1}}
+;}
+;}
+
+{func:f_getCardAtIndexOfPlayer;{oneline:
+    {set:ta1;{upper:{ta1};};}
+    {when:{ta1};is;number;{set:ta1;{math:-;{ta1};1;};}
+    {slice:{math:*;{ta1};2;};{s_player{ta2}cards};}
+    {slice:{math:+;{math:*;{ta1};2;};1;};{s_player{ta2}cards};};
+    {when:{ta1};in;{s_player{ta2}cards};{ta1};<f_getCardAtIndexOfPlayer: Card not in player inventory>;}
+    ;}
+;}
+;}
+
+{func:f_getCardAtIndexOfArbitraryCardList;{oneline:
+    {set:ta1;{math:-;{ta1};1;};}
+    {slice:{math:*;{ta1};2;};{ta2};}
+    {slice:{math:+;{math:*;{ta1};2;};1;};{ta2};}
+;}
+;}
+
+{func:f_renderCard;{oneline:
+    {card_{ta1}}
+;}
+;}
+
+{func:f_listPlayerCards;{oneline:
+    {set:isAi;{when:{ta1};eq;2;{when:{s_player2};eq;ai;true;false;};false;};}
+    {loop:{math:/;{len:{s_player{ta1}cards};};2;};
+        {when:{isAi};eq;false;{f_renderCard:{f_getCardAtIndexOfPlayer:{iter},{ta1}}};{card_WH};}
+    ;}
+;}
+;}
+
+{func:f_playField;
+{save:s_lasttime;{time:%s};}
+{when:{s_gameState};eq;player1turn;**;}{f_nickof:{s_player1}}'s cards:{when:{s_gameState};eq;player1turn;**;} ||{f_listPlayerCards:1}|| ({math:/;{len:{s_player1cards};};2;})\n
+\n
+{when:{s_gameState};eq;player1turn;{nameof:{s_player1};mention;};}{when:{s_gameState};eq;player2turn;{nameof:{s_player2};mention;};}'s turn.\n
+**TURN {s_turncount}**\n
+Card: {f_renderCard:{s_currentCard}}\n
+\n
+{when:{s_gameState};eq;player2turn;**;}{f_nickof:{s_player2}}'s cards:{when:{s_gameState};eq;player2turn;**;} ||{f_listPlayerCards:2}|| ({math:/;{len:{s_player2cards};};2;})\n
+{when:{s_player2};eq;ai;{when:{wchoose:true;25;false;75;};eq;true;{s_ainame} looks **{when:{s_ainame};ne;Kodi;{aimood_{s_aiMood}};CUTE;}**;};}\n
+;}
+
+{func:f_tryStartGame;
+    {when:{s_gameState};eq;ended;
+    {when:{ta1};eq;ai;Starting a game against AI...
+    {set:s_ainame;{choose:Wheatley;42;Hal 9000;GlaDOS;P-Body;Hatsune Miku;Not-a-bot;Kitchen Sink;Baby 42;Alter Ego;Kodi;};}
+    {save:s_ainame;{s_ainame};}
+    {save:s_player1;{caller.id};}
+    {save:s_player2;{ta1};}
+    {set:s_player1;{caller.id};}
+    {set:s_player2;{ta1};}
+    {set:s_gameState;waiting_for_consent;}
+    {set:callerid;ai;}
+    {f_startGame}
+    ;
+    {when:{nameof:{ta1};};is;error;That's not a valid user! Please enter a user ID or ping the user!;
+    {caller.mention} challenges {nameof:{ta1};mention;} in Uno! {nameof:{ta1};mention;}, do +t {tag} accept to start playing!
+    {save:s_player1;{caller.id};}
+    {save:s_player2;{ta1};}
+    {set:s_player1;{caller.id};}
+    {set:s_player2;{ta1};}
+    {save:s_gameState;waiting_for_consent;}
+    
+    ;};}
+    ;A game is currently in progress! If the game has been inactive for too long, do `+t {tag} reset` to stop it;}
+;}
+
+{func:f_startGame;
+    {when:{s_gameState};eq;waiting_for_consent;
+    {when:{callerid};eq;{s_player2};
+        {set:s_player1cards;;}
+        {set:s_player2cards;;}
+        {set:s_currentCard;{f_randomCard};}
+        {save:s_player1cards;{s_player1cards};}
+        {save:s_player2cards;{s_player2cards};}
+        {save:s_currentCard;{s_currentCard};}
+        {save:s_turncount;1;}
+        {set:s_turncount;1;}
+        
+
+        {f_drawCards:1,7}
+        {f_drawCards:2,7}
+
+        {save:s_gameState;player1turn;}
+        {set:s_gameState;player1turn;}
+        {set:multilineOutput;{f_playField};}
+    ;You're not the person meant to accept something! {nameof:{s_player1};nick;} is waiting for {nameof:{s_player2};nick;};}
+    ;Nobody has started a game! Do `+t {tag} start @player` to start a game;}
+;}
+
+{func:f_removeCard;{oneline:
+    {set:newCards;;}
+    {set:break;false;}
+    {loop:{math:/;{len:{s_player{ta1}cards};};2;};
+        {when:{break};eq;false;
+            {when:{f_getCardAtIndexOfPlayer:{iter},{ta1}};eq;{ta2};
+                {set:break;true;}
+            ;
+                {set:newCards;{newCards}{f_getCardAtIndexOfPlayer:{iter},{ta1}};}
+            ;}
+            ;{set:newCards;{newCards}{f_getCardAtIndexOfPlayer:{iter},{ta1}};}
+        ;}
+    ;}
+    
+    {save:s_player{ta1}cards;{newCards};}
+    {set:s_player{ta1}cards;{newCards};}
+;}
+;}
+
+{func:f_nextTurn;{oneline:
+    {save:s_gameState;{when:{s_gameState};eq;player1turn;player2turn;{when:{s_gameState};eq;player2turn;player1turn;{s_gameState};};};}
+    {set:s_gameState;{when:{s_gameState};eq;player1turn;player2turn;{when:{s_gameState};eq;player2turn;player1turn;{s_gameState};};};}
+    {set:s_turncount;{math:+;{s_turncount};1;};}
+    {save:s_turncount;{s_turncount};}
+;}
+;}
+
+{func:f_reset;
+    {when:{math:-;{time:%s};{s_lasttime};};gt;120;
+    {save:s_gameState;ended;}
+    The game has been reset, a new game may now start.
+    ;
+    The current game has to have been inactive for at least 2 minutes before it can be reset!
+    ;}
+;}
+
+{func:f_megareset;
+    {when:{caller.id};eq;424523008447741952;
+    {save:s_gameState;ended;}
+    The game has been reset, a new game may now start.
+    ;
+    fuck you.
+    ;}
+;}
+
+{func:f_play;
+    {when:|{s_gameState}|;in;|player1turn|player2turn|;
+        {when:{callerid};eq;{when:{s_gameState};eq;player1turn;{s_player1};}{when:{s_gameState};eq;player2turn;{s_player2};};
+            {when:{f_checkCardValidity:{f_getCardAtIndexOfPlayer:{ta1},{when:{s_gameState};eq;player1turn;1;}{when:{s_gameState};eq;player2turn;2;}},{s_currentCard}};eq;true;
+                {save:s_currentCard;{f_getCardAtIndexOfPlayer:{ta1},{when:{s_gameState};eq;player1turn;1;}{when:{s_gameState};eq;player2turn;2;}};}
+                {set:s_currentCard;{f_getCardAtIndexOfPlayer:{ta1},{when:{s_gameState};eq;player1turn;1;}{when:{s_gameState};eq;player2turn;2;}};}
+
+                {f_removeCard:{when:{s_gameState};eq;player1turn;1;}{when:{s_gameState};eq;player2turn;2;},{s_currentCard}}
+                {when:{len:{s_player{when:{s_gameState};eq;player1turn;1;}{when:{s_gameState};eq;player2turn;2;}cards};};eq;0;{set:s_gameState;player{when:{s_gameState};eq;player1turn;1;}{when:{s_gameState};eq;player2turn;2;}victory;};}
+                {when:{s_currentCard};is;/.P/;{f_drawCards:{when:{s_gameState};eq;player1turn;2;}{when:{s_gameState};eq;player2turn;1;},2};}
+                {when:{s_currentCard};is;/.F/;{f_drawCards:{when:{s_gameState};eq;player1turn;2;}{when:{s_gameState};eq;player2turn;1;},4};}
+                {when:{s_currentCard};is;/.S/;{f_nextTurn};}
+                {when:{s_currentCard};is;/W./;{when:{s_player2};eq;ai;{f_color:{choose:R;G;B;Y;}};};}
+                {when:{s_currentCard};is;/W./;{when:{s_gameState};eq;player1turn;{nameof:{s_player1};mention;};}{when:{s_gameState};eq;player2turn;{nameof:{s_player2};mention;};}, do `+t {tag} {choose:color;colour;} <R|G|B|Y>` to change colors!\n;{f_nextTurn};}
+                {f_aiCalculateMood}
+                {set:multilineOutput;{f_playField};}
+                {void:{when:{s_gameState};eq;player2turn;{when:{s_player2};eq;ai;{set:callerid;ai;}{f_aiCalculateMood}{when:{f_aiCalculateBestPlay};in; None;{f_draw:1};{f_play:{f_aiCalculateBestPlay}};}{set:callerid;{caller.id};};};};}
+                {!{when:{s_player{f_currentPlayer}autodraw};eq;true;{when:{f_canPlayerPlay:{f_currentPlayer}};eq;false;{f_draw:1};};}!}
+                
+            ;
+              You can't play that card on there, silly!
+            ;}
+        ;
+        It's not your turn, silly!;}
+    ;}
+;}
+
+{func:f_draw;
+    {when:|{s_gameState}|;in;|player1turn|player2turn|;
+        {when:{callerid};eq;{when:{s_gameState};eq;player1turn;{s_player1};}{when:{s_gameState};eq;player2turn;{s_player2};};
+            {when:{ta1};is;number;{set:ta1;{math:max;{ta1};1;};}
+            {f_drawCards:{when:{s_gameState};eq;player1turn;1;}{when:{s_gameState};eq;player2turn;2;},{ta1}}
+            {f_nextTurn}
+            {f_aiCalculateMood}
+            {set:multilineOutput;{f_playField};}
+            {void:{when:{s_gameState};eq;player2turn;{when:{s_player2};eq;ai;{set:callerid;ai;}{f_aiCalculateMood}{when:{f_aiCalculateBestPlay};in; None;{f_draw:1};{f_play:{f_aiCalculateBestPlay}};};};};}
+            {!{when:{s_player{f_currentPlayer}autodraw};eq;true;{when:{f_canPlayerPlay:{f_currentPlayer}};eq;false;{f_draw:1};};}!}
+            ;that's not a number dipshit;}
+            
+        ;
+        It's not your turn, silly!;}
+    ;}
+;}
+
+{func:f_color;
+    {set:ta1;{upper:{ta1};};}
+    {when:|{s_gameState}|;in;|player1turn|player2turn|;
+        {when:{caller.id};eq;{when:{s_gameState};eq;player1turn;{s_player1};}{when:{s_gameState};eq;player2turn;{s_player2};};
+            {when:{s_currentCard};is;/W./;
+            {when:|{ta1}|;in;|R|G|B|Y|RED|GREEN|BLUE|YELLOW|;
+            {when:|{ta1}|;in;|RED|GREEN|BLUE|YELLOW|;
+                {set:color_RED;R;}
+                {set:color_GREEN;G;}
+                {set:color_BLUE;B;}
+                {set:color_YELLOW;Y;}
+                {set:ta1;{color_{ta1}};}
+            ;}
+            {save:s_currentCard;{ta1}C;}
+            {set:s_currentCard;{ta1}C;}
+            {f_nextTurn}
+            {set:multilineOutput;{f_playField};}
+        ;That's not a valid color! The color must be upper case!;};The current card is not a wild card!;}
+        ;
+        It's not your turn, silly!;}
+    ;}
+;}
+
+{func:f_aiCalculateBestPlay;
+    {set:mycards;{s_player2cards};} {! Change this if AI ever gets to be more than player 2 !}
+    {set:tmp_onlyValid;;}
+    {loop:{math:/;{len:{mycards};};2;};
+        {when:{f_checkCardValidity:{f_getCardAtIndexOfPlayer:{iter},2},{s_currentCard}};eq;true;
+            {set:tmp_onlyValid;{tmp_onlyValid}{f_getCardAtIndexOfPlayer:{iter},2};}
+        ;}
+    ;}
+    {when:{tmp_onlyValid};eq;;{! Draw !}None;
+        {! Continue !}
+        {set:tmp_onlySameColor;;}
+        {loop:{math:/;{len:{tmp_onlyValid};};2;};
+            {when:{f_getCardAtIndexOfArbitraryCardList:{iter},{tmp_onlyValid}}|{slice:0;{s_currentCard};};is;/(.).\|\1/;
+                {set:tmp_onlySameColor;{tmp_onlySameColor}{f_getCardAtIndexOfArbitraryCardList:{iter},{tmp_onlyValid}};}
+            ;}
+        ;}
+
+        {when:{tmp_onlySameColor};eq;;
+            {! Only same symbol or Wild !}
+            
+            {set:tmp_onlySameSymbol;;}
+            {loop:{math:/;{len:{tmp_onlySameColor};};2;};
+                {when:{f_getCardAtIndexOfArbitraryCardList:{iter},{tmp_onlyValid}}|{slice:1;{s_currentCard};};is;/.(.)\|\1/;
+                    {set:tmp_onlySameSymbol;{tmp_onlySameSymbol}{f_getCardAtIndexOfArbitraryCardList:{iter},{tmp_onlyValid}};}
+                ;}
+            ;}
+            
+            {when:{tmp_onlySameSymbol};eq;;
+                {! Only wild !}
+                
+                {! Find index of the first special card !}
+                {set:tmp_cardToFind;{f_getCardAtIndexOfArbitraryCardList:1,{tmp_onlyValid}};}
+                ;
+                {! Has at least one same symbol !}
+                
+                {! Find index of the first number card !}
+                {set:tmp_cardToFind;{f_getCardAtIndexOfArbitraryCardList:1,{tmp_onlySameSymbol}};}
+            ;}
+
+        ;
+            
+            {! Has at least one of same color !}
+            {set:tmp_onlyNumber;;}
+            {loop:{math:/;{len:{tmp_onlySameColor};};2;};
+                {set:numberRegex;{when:{s_aiMood};eq;chill;/[^0-9]/;{when:{s_aiMood};eq;confident;/[0-9]/;/[^0-9]/;};};}
+                {when:{slice:1;{f_getCardAtIndexOfArbitraryCardList:{iter},{tmp_onlySameColor}};};is;{numberRegex};
+                    {set:tmp_onlyNumber;{tmp_onlyNumber}{f_getCardAtIndexOfArbitraryCardList:{iter},{tmp_onlySameColor}};}
+                ;}
+            ;}
+
+            {when:{tmp_onlyNumber};eq;;
+                {! Only specials !}
+                
+                {! Find index of the first special card !}
+                {set:tmp_cardToFind;{f_getCardAtIndexOfArbitraryCardList:1,{tmp_onlySameColor}};}
+            ;
+                {! Has at least one number !}
+                
+                {! Find index of the first number card !}
+                {set:tmp_cardToFind;{f_getCardAtIndexOfArbitraryCardList:1,{tmp_onlyNumber}};}
+            ;}
+
+
+        ;}
+        {when:{s_aiMood};eq;scared;{when:{s_currentCard};is;/.[PSCF]/;{set:tmp_onlySameSymbol;;}
+            {loop:{math:/;{len:{tmp_onlySameColor};};2;};
+                {when:{f_getCardAtIndexOfArbitraryCardList:{iter},{tmp_onlyValid}}|{slice:1;{s_currentCard};};is;/.(.)\|\1/;
+                    {set:tmp_onlySameSymbol;{tmp_onlySameSymbol}{f_getCardAtIndexOfArbitraryCardList:{iter},{tmp_onlyValid}};}
+                ;}
+            ;}
+            {when:{tmp_onlySameSymbol};eq;;
+                ;
+                {! Find index of the first number card !}
+                {set:tmp_cardToFind;{f_getCardAtIndexOfArbitraryCardList:1,{tmp_onlySameSymbol}};}
+            ;};};}
+        {set:break;false;}
+        {loop:{math:/;{len:{mycards};};2;};
+            {when:{f_getCardAtIndexOfPlayer:{iter},2};eq;{tmp_cardToFind};{when:{break};eq;false;{set:break;true;}{void:AI returned value {iter};}{iter};};}
+        ;}
+    ;}
+
+    
+
+;}
+
+{func:f_aiCalculateMood;
+    {void:CALCULATING MOOD;}
+    {when:{f_canPlayerPlay:2};eq;true;
+        {set:mycards;{s_player2cards};} {! Change this if AI ever gets to be more than player 2 !}
+        {set:tmp_validcards;;}
+        {loop:{math:/;{len:{mycards};};2;};
+            {when:{f_checkCardValidity:{f_getCardAtIndexOfPlayer:{iter},2},{s_currentCard}};eq;true;
+                {set:tmp_validcards;{tmp_validcards}{f_getCardAtIndexOfPlayer:{iter},2};}
+            ;}
+        ;}
+        {when:{len:{tmp_validcards};};gt;7;{set:s_aiMood;confident;}{save:s_aiMood;{s_aiMood};};{set:s_aiMood;chill;}{save:s_aiMood;{s_aiMood};};}
+    ;}
+    {when:{math:-;{len:{s_player1cards};};{len:{s_player2cards};};};lt;-7;{set:s_aiMood;scared;}{save:s_aiMood;{s_aiMood};};}
+    {! Moods: CHILL - Prioritise same color/offense !}
+    {! Moods: CONFIDENT - Prioritise same color/number !}
+    {! Moods: SCARED - Prioritise any offense !}
+;}
+
+{set:aimood_chill;{choose:CHILL;CALM;};}
+{set:aimood_scared;SCARED;}
+{set:aimood_confident;CONFIDENT;}
+
+{func:f_canPlayerPlay;
+    {set:break;false;}
+    {set:output;false;}
+    {loop:{math:/;{len:{s_player{ta1}cards};};2;};
+        {when:{f_checkCardValidity:{f_getCardAtIndexOfPlayer:{iter},{ta1}},{s_currentCard}};eq;true;
+            {when:{break};eq;false;
+            {set:output;true;}
+            {set:break;true;}
+            ;}
+        ;}
+    ;}
+    {output}
+    
+;}
+
+{func:f_currentPlayer;
+    {when:{s_gameState};eq;player1turn;1;}{when:{s_gameState};eq;player2turn;2;}{when:{s_gameState};eq;player1victory;1;}{when:{s_gameState};eq;player2victory;2;}
+;}
+
+{when:{arglen};gt;0;
+
+    {when:{arg1};eq;start;
+        {f_tryStartGame:{rep:/[^0-9ai]/;;{arg2};}}
+    ;
+
+    {when:{arg1};eq;accept;
+        {f_startGame}
+    ;
+
+    {when:{arg1};eq;reset;
+        {f_reset}
+    ;
+
+    {when:{arg1};eq;megareset;
+        {f_megareset}
+    ;
+
+    {when:{arg1};eq;play;
+        {f_play:{arg2}}
+    ;
+
+    {when:{arg1};eq;draw;
+        {when:{arglen};lt;2;{set:arg2;1;};}
+        {f_draw:{arg2}}  
+    ;
+
+    {when:{arg1};eq;color;
+        {f_color:{arg2}}
+    ;
+
+    {when:{arg1};eq;colour;
+        {f_color:{arg2}}
+    ;
+    
+    
+    {when:{arg1};eq;skipAIturn;
+        {when:{s_gameState};eq;player2turn;
+        {when:{s_player2};eq;ai;{f_nextTurn}Skipped the AI's turn... what a sore loser;It's not currently the AI's turn!;}
+        ;
+        It's not currently the AI's turn!;}
+
+        ;
+    {when:{arg1};eq;help;
+         {set:multilineOutput;All commands are prefixed with `+t {tag}`\n
+        ```md\n
+        start <player|'ai'> - Start a game against that player (i.e. +t {tag} start 196574963673595904) or the ai\n
+        play <index> - Play the card with this index in your hand (i.e. +t {tag} play 2)\n
+        {choose:color;colour;} <R|G|B|Y> - Changes the color of the current card if you played a wild card
+        draw [number] - Draw one (or more) card(s)\n
+        reset - End the current game if it has been going on for too long\n
+        ```\n
+        ;}
+    ;I don't understand what you meant! Do `+t {tag} help` to learn more;};};};};};};};};};}
+
+
+    
+
+;{!else!}
+Do `+t {tag} help` to learn more about uno
+;}
+{when:{s_gameState};is;/player[12]victory/;
+    {save:s_gameState;ended;}
+    {set:multilineOutput;
+        {when:{s_gameState};eq;player1victory;
+            {nameof:{s_player1};mention;};}
+            {when:{s_gameState};eq;player2victory;{when:{s_player2};eq;ai;{s_ainame};{nameof:{s_player2};mention;};};}
+             wins in {s_turncount} turns! {title:{when:{pronounlib_available};eq;true;{when:{s_player{f_currentPlayer}};ne;ai;{f_pronounlib_loadUser:{caller.id}}{f_pronounlib_GetPronoun:{PRONOUNTYPE_POSSESIVE_DETERMINANT}};their;};their;};} final card was: {f_renderCard:{s_currentCard}}.
+    ;}
+;}
+{!=====END OF ONELINE=====!}
+;}{when:{multilineOutput};ne;;{multilineOutput};}
